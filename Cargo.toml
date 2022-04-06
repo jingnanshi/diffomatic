@@ -1,0 +1,17 @@
+[package]
+name = "diffomatic"
+version = "0.1.0"
+edition = "2021"
+authors = ["Jingnan Shi <jnshi@mit.edu>"]
+
+[dependencies]
+num-traits = "0.2.14"
+nalgebra = "0.30.1"
+
+[lib]
+name = "diff_lib"
+path = "src/lib.rs"
+
+[[bin]]
+name = "diff_exe"
+path = "src/bin.rs"
