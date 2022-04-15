@@ -1,6 +1,8 @@
 use std::ops::{Add, Div, Mul, Neg, Sub};
 use num_traits::Float;
+
 extern crate nalgebra as na;
+
 use na::{Vector, Matrix};
 
 /// A scalar dual number type
@@ -11,17 +13,23 @@ pub struct DualScalar {
 }
 
 /// A static column-vector dual number type
+///
+/// D: number of rows
+/// S: storage type
 #[derive(Clone, Copy)]
-pub struct DualVector<D, S>
-    where S: nalgebra::base::storage::Storage<f64, D>
+pub struct DualSVector<const R: usize>
 {
-    pub v: Vector<f64, D, S>,
-    pub dv: Vector<f64, D, S>,
+    pub v: nalgebra::SVector<f64, R>,
+    pub dv: nalgebra::SVector<f64, R>,
 }
 
 /// A static matrix dual number type
+///
+/// R: number of orows
+/// C: number of columns
 #[derive(Clone, Copy)]
-pub struct DualMatrix<R, C> {
+pub struct DualSMatrix<const R: usize, const C: usize>
+{
     pub v: nalgebra::SMatrix<f64, R, C>,
     pub dv: nalgebra::SMatrix<f64, R, C>,
 }
@@ -39,12 +47,35 @@ impl Add for DualScalar {
     }
 }
 
+impl<const R: usize> Add for DualSVector<R>
+{
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        DualSVector {
+            v: self.v + rhs.v,
+            dv: self.dv + rhs.dv,
+        }
+    }
+}
+
 // Subtraction Rules
 impl Sub for DualScalar {
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
         DualScalar {
+            v: self.v - rhs.v,
+            dv: self.dv - rhs.dv,
+        }
+    }
+}
+
+impl<const R: usize> Sub for DualSVector<R> {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        DualSVector {
             v: self.v - rhs.v,
             dv: self.dv - rhs.dv,
         }
