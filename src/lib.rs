@@ -3,7 +3,9 @@ use num_traits::Float;
 
 extern crate nalgebra as na;
 
-use na::{Vector, Matrix};
+use na::allocator::Allocator;
+use na::dimension::Dim;
+use na::{DefaultAllocator, OVector};
 
 /// A scalar dual number type
 #[derive(Clone, Copy)]
@@ -16,11 +18,12 @@ pub struct DualScalar {
 ///
 /// D: number of rows
 /// S: storage type
-#[derive(Clone, Copy)]
-pub struct DualSVector<const R: usize>
+#[derive(Clone)]
+pub struct DualVector<D: Dim>
+    where DefaultAllocator: Allocator<f64, D>,
 {
-    pub v: nalgebra::SVector<f64, R>,
-    pub dv: nalgebra::SVector<f64, R>,
+    pub v: nalgebra::OVector<f64, D>,
+    pub dv: nalgebra::OVector<f64, D>,
 }
 
 /// A static matrix dual number type
@@ -47,12 +50,13 @@ impl Add for DualScalar {
     }
 }
 
-impl<const R: usize> Add for DualSVector<R>
+impl<R : Dim> Add for DualVector<R>
+    where DefaultAllocator: Allocator<f64, R>,
 {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
-        DualSVector {
+        DualVector {
             v: self.v + rhs.v,
             dv: self.dv + rhs.dv,
         }
@@ -71,11 +75,13 @@ impl Sub for DualScalar {
     }
 }
 
-impl<const R: usize> Sub for DualSVector<R> {
+impl<R: Dim> Sub for DualVector<R>
+    where DefaultAllocator: Allocator<f64, R>,
+{
     type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        DualSVector {
+        DualVector {
             v: self.v - rhs.v,
             dv: self.dv - rhs.dv,
         }
