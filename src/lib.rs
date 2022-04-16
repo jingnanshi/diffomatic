@@ -50,7 +50,7 @@ impl Add for DualScalar {
     }
 }
 
-impl<R : Dim> Add for DualVector<R>
+impl<R: Dim> Add for DualVector<R>
     where DefaultAllocator: Allocator<f64, R>,
 {
     type Output = Self;
@@ -125,4 +125,12 @@ pub fn derivative<F>(func: F, x0: f64) -> f64
     where F: FnOnce(DualScalar) -> DualScalar,
 {
     func(DualScalar { v: x0, dv: 1.0 }).deriv()
+}
+
+/// Evaluate the gradient
+pub fn gradient<F, D: Dim>(func: F, x0: OVector<f64, D>) -> f64
+    where F: FnOnce(DualVector<D>) -> DualScalar,
+          DefaultAllocator: Allocator<f64, D>,
+{
+    todo!()
 }
