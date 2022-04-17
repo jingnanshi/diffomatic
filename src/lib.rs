@@ -78,8 +78,18 @@ pub fn derivative<F>(func: F, x0: f64) -> f64
 }
 
 /// Evaluate the gradient
-pub fn gradient<F, D: Dim>(func: F, x0: &[f64]) -> f64
-    where F: FnOnce(&[DualScalar]) -> DualScalar,
+pub fn gradient<F, D: Dim>(func: F, x0: &[f64]) -> Vec<f64>
+    where F: Fn(&[DualScalar]) -> DualScalar,
 {
-    todo!()
+    // To get all the partials, we set each var to have dv=1
+    // and the others dv=0, and pass them through the function
+    let mut inputs: Vec<DualScalar> = x0.iter().map(|&v| DualScalar { v: v, dv: 0. }).collect();
+    (0..x0.len()).map(
+        |i| {
+            inputs[i].dv = 1.;
+            let partial = func(&inputs).deriv();
+            inputs[i].dv = 0.;
+            partial
+        }
+    ).collect()
 }
