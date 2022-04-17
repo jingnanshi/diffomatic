@@ -3,10 +3,6 @@ use num_traits::Float;
 
 extern crate nalgebra as na;
 
-use na::allocator::Allocator;
-use na::dimension::Dim;
-use na::{DefaultAllocator, OVector};
-
 /// A scalar dual number type
 #[derive(Clone, Copy)]
 pub struct DualScalar {
@@ -78,7 +74,7 @@ pub fn derivative<F>(func: F, x0: f64) -> f64
 }
 
 /// Evaluate the gradient
-pub fn gradient<F, D: Dim>(func: F, x0: &[f64]) -> Vec<f64>
+pub fn gradient<F>(func: F, x0: &[f64]) -> Vec<f64>
     where F: Fn(&[DualScalar]) -> DualScalar,
 {
     // To get all the partials, we set each var to have dv=1
