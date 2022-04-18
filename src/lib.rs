@@ -1,5 +1,8 @@
-use std::ops::{Add, Div, Mul, Neg, Sub, Index};
-use num_traits::Float;
+use std::fmt::{Debug, Formatter};
+use std::ops::{Add, Div, Mul, Neg, Sub, Index, AddAssign, MulAssign};
+use na::{Dim, OMatrix, OVector, DefaultAllocator, DMatrix, SMatrix};
+use na::allocator::Allocator;
+use num_traits::{Float, Zero};
 
 extern crate nalgebra as na;
 
@@ -8,6 +11,32 @@ extern crate nalgebra as na;
 pub struct DualScalar {
     pub v: f64,
     pub dv: f64,
+}
+
+// Traits
+impl PartialEq for DualScalar {
+    fn eq(&self, other: &Self) -> bool {
+        self.v == other.v
+    }
+}
+
+impl Debug for DualScalar {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "(v, dv) = ({:?}, {:?})", self.v, self.dv)
+    }
+}
+
+impl Zero for DualScalar {
+    fn zero() -> Self {
+        DualScalar {
+            v: 0.0,
+            dv: 0.0,
+        }
+    }
+
+    fn is_zero(&self) -> bool {
+        self.v.is_zero()
+    }
 }
 
 // Other functions
@@ -27,6 +56,15 @@ impl Add for DualScalar {
             v: self.v + rhs.v,
             dv: self.dv + rhs.dv,
         }
+    }
+}
+
+impl AddAssign for DualScalar {
+    fn add_assign(&mut self, rhs: Self) {
+        *self = Self {
+            v: self.v + rhs.v,
+            dv: self.dv + rhs.dv,
+        };
     }
 }
 
@@ -51,6 +89,15 @@ impl Mul for DualScalar {
             v: self.v * rhs.v,
             dv: self.dv * rhs.v + self.v * rhs.dv,
         }
+    }
+}
+
+impl MulAssign for DualScalar {
+    fn mul_assign(&mut self, rhs: Self) {
+        *self = Self {
+            v: self.v * rhs.v,
+            dv: self.dv * rhs.v + self.v * rhs.dv,
+        };
     }
 }
 
@@ -88,4 +135,25 @@ pub fn gradient<F>(func: F, x0: &[f64]) -> Vec<f64>
             partial
         }
     ).collect()
+}
+
+/// Evaluate the Jacobian of function f: R^N -> R^M
+/// The Jacobian will be a M-by-N matrix
+pub fn jacobian<F, const N: usize, const M: usize>(func: F, x0: &[f64]) -> SMatrix<f64, M, N>
+    where F: Fn(&[DualScalar]) -> Vec<DualScalar>,
+{
+    // To get all the partials, we set each var to have dv=1
+    // and the others dv=0, and pass them through the function
+    let mut jacobian : SMatrix<f64, M, N> = SMatrix::zeros();
+
+    // we proceed row by row to construct the jacobian
+    for (i, mut row) in jacobian.row_iter_mut().enumerate() {
+        // nested closure so we can call the gradient function
+        let row_func = |x : &[DualScalar]| {
+            func(x)[i]
+        };
+        let row_gradient = gradient(row_func, x0);
+        row.copy_from_slice(&row_gradient);
+    }
+    return jacobian;
 }
