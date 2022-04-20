@@ -144,16 +144,18 @@ pub fn jacobian<F, const N: usize, const M: usize>(func: F, x0: &[f64]) -> SMatr
 {
     // To get all the partials, we set each var to have dv=1
     // and the others dv=0, and pass them through the function
-    let mut jacobian : SMatrix<f64, M, N> = SMatrix::zeros();
+    let mut jacobian: SMatrix<f64, M, N> = SMatrix::zeros();
+    let mut inputs: Vec<DualScalar> = x0.iter().map(|&v| DualScalar { v: v, dv: 0. }).collect();
 
-    // we proceed row by row to construct the jacobian
-    for (i, mut row) in jacobian.row_iter_mut().enumerate() {
-        // nested closure so we can call the gradient function
-        let row_func = |x : &[DualScalar]| {
-            func(x)[i]
-        };
-        let row_gradient = gradient(row_func, x0);
-        row.copy_from_slice(&row_gradient);
+    // every time we call the func we can get one column of partials
+    for (i, mut col) in jacobian.column_iter_mut().enumerate() {
+        inputs[i].dv = 1.;
+        let col_result = func(&inputs);
+        for j in 0..M {
+            col[j] = col_result[j].dv;
+        }
+        inputs[i].dv = 0.;
     }
+
     return jacobian;
 }
