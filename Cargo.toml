@@ -10,7 +10,7 @@ nalgebra = "0.30.1"
 
 [lib]
 name = "diff_lib"
-path = "src/forward.rs"
+path = "src/lib.rs"
 
 [[bin]]
 name = "diff_exe"
