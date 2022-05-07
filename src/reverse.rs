@@ -9,19 +9,20 @@ use std::rc::Rc;
 
 type VarRef = Rc<RefCell<Var>>;
 
+#[derive(Clone)]
 /// Node for reverse mode
 pub struct Var {
     /// Value
     pub v: f64,
     /// Adjoint of this Var
-    pub dv: Option<f64>,
+    pub dv: f64,
     /// References to the parent nodes, with a weight (partial) value
     pub parents: Vec<(f64, VarRef)>,
 }
 
 impl Debug for Var {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "v: {}, dv: {:?}", self.v, self.dv)
+        write!(f, "v: {}, dv: {:?}, parents: {:?}", self.v, self.dv, self.parents)
     }
 }
 
@@ -29,13 +30,13 @@ impl Add for Var {
     type Output = Var;
 
     fn add(self, rhs: Self) -> Self::Output {
-        let new_v =self.v + rhs.v;
+        let new_v = self.v + rhs.v;
         let self_rc = Rc::new(RefCell::new(self));
         let rhs_rc = Rc::new(RefCell::new(rhs));
 
         Var {
             v: new_v,
-            dv: None,
+            dv: 0.0,
             parents: vec![(1.0, self_rc), (1.0, rhs_rc)],
         }
     }
@@ -43,23 +44,27 @@ impl Add for Var {
 
 impl Var {
     /// Create a new node
-    pub fn new(v : f64) -> Var {
+    pub fn new(v: f64) -> Var {
         Var {
             v,
-            dv: None,
-            parents: Vec::<(f64, VarRef)>::new()
+            dv: 0.0,
+            parents: Vec::<(f64, VarRef)>::new(),
         }
     }
 
-    /// Calculate adjoint
-    pub fn grad(&self) -> f64 {
-        match self.dv {
-            None => {
-                // backprop
-                0.0
-            },
-            Some(grad_value) => grad_value,
+    /// Backprop
+    pub fn backprop(&mut self, adjoint: f64) {
+        // backprop
+        self.dv += adjoint;
+        for parent in self.parents.iter() {
+            println!("parent: {:?}", &parent);
+            (*parent.1).borrow_mut().backprop(parent.0 * adjoint)
         }
+    }
+
+    /// Call this to get gradients
+    pub fn grad(&mut self) {
+        self.backprop(1.0);
     }
 }
 
@@ -69,9 +74,10 @@ mod tests {
 
     #[test]
     fn addition() {
-        let x : Var = Var::new(1.0);
-        let y : Var = Var::new(2.0);
-        let z = x + y;
-        println!("z value: {:?}", z);
+        let x: Var = Var::new(1.0);
+        let y: Var = Var::new(2.0);
+        let mut z = x + y;
+        z.grad();
+        println!("z value: {:?}", &z);
     }
 }
