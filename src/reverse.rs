@@ -97,10 +97,17 @@ impl<'t> Add for Var<'t> {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
-        // add values
-        // add entry (of the new variable) on tape
         self.tape.binary_op(1.0, 1.0,
                             self.index, rhs.index, self.v + rhs.v)
+    }
+}
+
+impl<'t> Mul for Var<'t> {
+    type Output = Self;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        self.tape.binary_op(rhs.v, self.v,
+                            self.index, rhs.index, self.v * rhs.v)
     }
 }
 
