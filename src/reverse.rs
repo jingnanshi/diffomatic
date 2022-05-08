@@ -1,4 +1,4 @@
-use std::borrow::BorrowMut;
+use std::borrow::{Borrow, BorrowMut};
 use std::ops::{Add, Div, Mul, Neg, Sub, Index, AddAssign, MulAssign};
 use std::cell::{Ref, RefCell};
 use std::fmt::{Debug, Formatter};
@@ -107,7 +107,8 @@ impl Var<'_> {
         // because during forward pass, we always store new nodes at the end
         // of the tape, when we do the backward pass we can
         // just incrementally add partial * adjoint
-        for (i, node) in self.tape.nodes.borrow().iter().rev().enumerate() {
+        for i in (0..tape_len).rev() {
+            let node = self.tape.nodes.borrow()[i];
             // increment gradient contribution to the left parent
             let lhs_dep = node.parents[0];
             let lhs_partial = node.partials[0];
@@ -134,6 +135,24 @@ impl<'t> Add for Var<'t> {
     }
 }
 
+impl<'t> Sub for Var<'t> {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        self.tape.binary_op(1.0, -1.0,
+                            self.index, rhs.index, self.v - rhs.v)
+    }
+}
+
+impl<'t> Neg for Var<'t> {
+    type Output = Self;
+
+    fn neg(self) -> Self::Output {
+        self.tape.unary_op(-1.0, self.index, - self.v)
+    }
+}
+
+
 impl<'t> Mul for Var<'t> {
     type Output = Self;
 
@@ -143,15 +162,24 @@ impl<'t> Mul for Var<'t> {
     }
 }
 
+impl<'t> Div for Var<'t> {
+    type Output = Self;
+
+    fn div(self, rhs: Self) -> Self::Output {
+        self.tape.binary_op(1.0 / rhs.v, -self.v / (rhs.v * rhs.v),
+                            self.index, rhs.index, self.v / rhs.v)
+    }
+}
+
 /// Struct holding gradients
 #[derive(Debug)]
 pub struct Grad {
-    pub grad : Vec<f64>,
+    pub grad: Vec<f64>,
 }
 
 impl Grad {
     /// Get the gradient with respect to a variable
-    pub fn wrt(&self, var : Var) -> f64 {
+    pub fn wrt(&self, var: Var) -> f64 {
         self.grad[var.index]
     }
 }
@@ -164,10 +192,9 @@ mod tests {
     fn addition() {
         let tape = Tape::new();
         let x = tape.var(1.0);
-        let y = tape.var(2.0);
-        let z = x + x * y;
+        let y = tape.var(3.0);
+        let z = -x + x * y;
         let grad = z.backprop();
-        println!("grad: {:?}", grad);
         println!("dz/dx: {:?}", grad.wrt(x));
         println!("dz/dy: {:?}", grad.wrt(y));
     }
