@@ -99,7 +99,8 @@ impl<'t> Add for Var<'t> {
     fn add(self, rhs: Self) -> Self::Output {
         // add values
         // add entry (of the new variable) on tape
-        todo!()
+        self.tape.binary_op(1.0, 1.0,
+                            self.index, rhs.index, self.v + rhs.v)
     }
 }
 
