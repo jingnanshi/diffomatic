@@ -162,6 +162,14 @@ impl<'t> Mul for Var<'t> {
     }
 }
 
+impl<'t> Mul<Var<'t>> for f64 {
+    type Output = Var<'t>;
+
+    fn mul(self, rhs: Var<'t>) -> Self::Output {
+        rhs.tape.unary_op(self, rhs.index, self * rhs.v)
+    }
+}
+
 impl<'t> Div for Var<'t> {
     type Output = Self;
 
@@ -192,8 +200,8 @@ mod tests {
     fn addition() {
         let tape = Tape::new();
         let x = tape.var(1.0);
-        let y = tape.var(3.0);
-        let z = -x + x * y;
+        let y = tape.var(4.0);
+        let z = -2.0 * x + x * y;
         let grad = z.backprop();
         println!("dz/dx: {:?}", grad.wrt(x));
         println!("dz/dy: {:?}", grad.wrt(y));
