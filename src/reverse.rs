@@ -117,11 +117,9 @@ mod tests {
 
     #[test]
     fn addition() {
-        todo!()
-        // building the computational graph
-
-        // back prop
-
-        // get gradients
+        let tape = Tape::new();
+        let x = tape.var(1.0);
+        let y = tape.var(2.0);
+        let z = x + x * y;
     }
 }
