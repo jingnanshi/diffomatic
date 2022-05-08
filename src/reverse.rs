@@ -27,7 +27,7 @@ impl Tape {
     }
 
     /// Add a new (input) variable on the tape
-    pub fn var<'t>(&'t self, value: f64) -> Var<'t> {
+    pub fn var(&self, value: f64) -> Var {
         let len = self.vars.borrow().len();
         self.vars.borrow_mut().push(
             Node {
@@ -40,6 +40,44 @@ impl Tape {
             tape: self,
             index: len,
             v: value,
+        }
+    }
+
+    /// Add a new node to the tape, where the node represents
+    /// the result from a unary operation
+    pub fn unary_op(&self, partial: f64,
+                    index: usize, new_value: f64) -> Var {
+        let len = self.vars.borrow().len();
+        self.vars.borrow_mut().push(
+            Node {
+                partials: [partial, 0.0],
+                // only the left index matters; the right index points to itself
+                parents: [index, len],
+            }
+        );
+        Var {
+            tape: self,
+            index: len,
+            v: new_value,
+        }
+    }
+
+    /// Add a new node to the tape, where the node represents
+    /// the result from a binary operation
+    pub fn binary_op(&self, lhs_partial: f64, rhs_partial: f64,
+                     lhs_index: usize, rhs_index: usize, new_value: f64) -> Var {
+        let len = self.vars.borrow().len();
+        self.vars.borrow_mut().push(
+            Node {
+                partials: [lhs_partial, rhs_partial],
+                // for a single (input) variable, we point the parents to itself
+                parents: [lhs_index, rhs_index],
+            }
+        );
+        Var {
+            tape: self,
+            index: len,
+            v: new_value,
         }
     }
 }
