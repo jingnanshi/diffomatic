@@ -195,15 +195,46 @@ impl Grad {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use float_cmp::*;
 
     #[test]
     fn addition() {
         let tape = Tape::new();
         let x = tape.var(1.0);
         let y = tape.var(4.0);
-        let z = -2.0 * x + x * y;
+        let z = x + y;
         let grad = z.backprop();
-        println!("dz/dx: {:?}", grad.wrt(x));
-        println!("dz/dy: {:?}", grad.wrt(y));
+        assert!(approx_eq!(f64, grad.wrt(x), 1.0, ulps=5));
+        assert!(approx_eq!(f64, grad.wrt(y), 1.0, ulps=5));
+    }
+
+    #[test]
+    fn mul() {
+        let tape = Tape::new();
+        let x = tape.var(1.0);
+        let y = tape.var(4.0);
+        let z = x * y;
+        let grad = z.backprop();
+        assert!(approx_eq!(f64, grad.wrt(x), y.v, ulps=5));
+        assert!(approx_eq!(f64, grad.wrt(y), x.v, ulps=5));
+    }
+
+    #[test]
+    fn neg() {
+        let tape = Tape::new();
+        let x = tape.var(1.0);
+        let z = -x;
+        let grad = z.backprop();
+        assert!(approx_eq!(f64, grad.wrt(x), -1.0, ulps=5));
+    }
+
+    #[test]
+    fn multiple_multiplications() {
+        let tape = Tape::new();
+        let x = tape.var(1.0);
+        let y = tape.var(1.0);
+        let z = -2.0 * x + x * x * x * y;
+        let grad = z.backprop();
+        assert!(approx_eq!(f64, grad.wrt(x), 1.0, ulps=5));
     }
 }
