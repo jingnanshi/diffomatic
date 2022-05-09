@@ -159,3 +159,36 @@ pub fn jacobian<F, const N: usize, const M: usize>(func: F, x0: &[f64]) -> SMatr
 
     return jacobian;
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use float_cmp::*;
+
+    #[test]
+    fn derivative_test() {
+        let f1_test = |x: DualScalar| x * x;
+        let f1_result: f64 = derivative(f1_test, 2.0);
+        assert!(approx_eq!(f64, f1_result, 4.0, ulps=5));
+    }
+
+    #[test]
+    fn gradient_test() {
+        let f_test = |x: &[DualScalar]| x[0] + x[1];
+        let f_result: Vec<f64> = gradient(f_test, vec![1., 2.].as_slice());
+        assert!(approx_eq!(f64, f_result[0], 1.0, ulps=5));
+        assert!(approx_eq!(f64, f_result[1], 1.0, ulps=5));
+    }
+
+    #[test]
+    fn jacobian_test() {
+        let f_test = |x: &[DualScalar]| {
+            vec![x[0] * x[0] * x[1], x[0] + x[1]]
+        };
+        let f_result: SMatrix<f64, 2, 2> = jacobian(f_test, vec![1., 2.].as_slice());
+        assert!(approx_eq!(f64, f_result[(0,0)], 4.0, ulps=5));
+        assert!(approx_eq!(f64, f_result[(0,1)], 1.0, ulps=5));
+        assert!(approx_eq!(f64, f_result[(1,0)], 1.0, ulps=5));
+        assert!(approx_eq!(f64, f_result[(1,1)], 1.0, ulps=5));
+    }
+}

@@ -198,7 +198,7 @@ mod tests {
     use float_cmp::*;
 
     #[test]
-    fn addition() {
+    fn addition_test() {
         let tape = Tape::new();
         let x = tape.var(1.0);
         let y = tape.var(4.0);
@@ -209,7 +209,7 @@ mod tests {
     }
 
     #[test]
-    fn mul() {
+    fn mul_test() {
         let tape = Tape::new();
         let x = tape.var(1.0);
         let y = tape.var(4.0);
@@ -220,7 +220,7 @@ mod tests {
     }
 
     #[test]
-    fn neg() {
+    fn neg_test() {
         let tape = Tape::new();
         let x = tape.var(1.0);
         let z = -x;
@@ -229,7 +229,7 @@ mod tests {
     }
 
     #[test]
-    fn multiple_multiplications() {
+    fn multiple_multiplications_test() {
         let tape = Tape::new();
         let x = tape.var(1.0);
         let y = tape.var(1.0);
